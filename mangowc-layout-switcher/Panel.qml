@@ -16,14 +16,18 @@ Item {
   readonly property string panelMonitor: {
     if (currentScreen && currentScreen.name) return currentScreen.name
     if (pluginApi && pluginApi.currentScreen && pluginApi.currentScreen.name) return pluginApi.currentScreen.name
-    if (pluginApi && pluginApi.mainInstance && pluginApi.mainInstance.availableMonitors.length > 0) {
+    if (pluginApi && pluginApi.mainInstance && pluginApi.mainInstance.availableMonitors && pluginApi.mainInstance.availableMonitors.length > 0) {
       return pluginApi.mainInstance.availableMonitors[0]
     }
     return ""
   }
   
-  readonly property var layouts: pluginApi?.mainInstance?.availableLayouts || []
-  readonly property string activeLayout: (pluginApi?.mainInstance?.monitorLayouts ?? {})[root.selectedMonitor || root.panelMonitor] || ""
+  readonly property var layouts: (pluginApi && pluginApi.mainInstance && pluginApi.mainInstance.availableLayouts) ? pluginApi.mainInstance.availableLayouts : []
+  
+  readonly property string activeLayout: {
+    var layoutsDict = (pluginApi && pluginApi.mainInstance && pluginApi.mainInstance.monitorLayouts) ? pluginApi.mainInstance.monitorLayouts : {}
+    return layoutsDict[root.selectedMonitors[0] || root.panelMonitor] || ""
+  }
 
   // Matches BarWidget mapping and grouping
   readonly property var iconMap: ({
@@ -44,11 +48,10 @@ Item {
   property bool applyToAll: false
   property var selectedMonitors: []
   property real contentPreferredWidth: 500 * Style.uiScaleRatio 
-  property real contentPreferredHeight: 420 * Style.uiScaleRatio
+  property real contentPreferredHeight: panelContent.implicitHeight + Style.margin2L
 
   function toggleMonitor(monitorName) {
-    var idx = root.selectedMonitors.indexOf(monitorName)
-    if (idx >= 0) {
+    if (root.selectedMonitors.includes(monitorName)) {
       root.selectedMonitors = root.selectedMonitors.filter(m => m !== monitorName)
     } else {
       root.selectedMonitors = root.selectedMonitors.concat([monitorName])
@@ -56,56 +59,92 @@ Item {
   }
 
   Component.onCompleted: {
-    if (pluginApi?.mainInstance) {
+    if (pluginApi && pluginApi.mainInstance) {
       pluginApi.mainInstance.refresh()
     }
   }
 
   // ===== UI =====
 
-  MouseArea {
+  Item {
+    id: panelContainer
     anchors.fill: parent
-    onClicked: pluginApi.closePanel()
 
+    // Background Click Catcher (Closes Panel)
+    MouseArea {
+      anchors.fill: parent
+      onClicked: {
+        if (pluginApi) {
+          pluginApi.closePanel()
+        }
+      }
+    }
+
+    // Panel Window Surface
     Rectangle {
-      id: panelContainer
-      anchors.centerIn: parent
       width: root.contentPreferredWidth
       height: root.contentPreferredHeight
+      anchors.centerIn: parent
       
       color: Color.mSurface
       radius: Style.radiusL
       border.width: 1
       border.color: Color.mOutline
-      
-      MouseArea { anchors.fill: parent; onClicked: {} }
+
+      // Inner Click Catcher (Prevents closing when clicking the panel itself)
+      MouseArea {
+        anchors.fill: parent
+        onClicked: mouse => mouse.accepted = true 
+      }
 
       ColumnLayout {
+        id: panelContent
         anchors.fill: parent
         anchors.margins: Style.marginL
         spacing: Style.marginM
 
         // Header
-        NText {
-          text: "Switch Layout"
-          pointSize: Style.fontSizeL
-          font.weight: Font.Medium
-          color: Color.mOnSurface
+        NBox {
+          Layout.fillWidth: true
+          implicitHeight: headerRow.implicitHeight + Style.margin2M
+
+          RowLayout {
+            id: headerRow
+            anchors.fill: parent
+            anchors.margins: Style.marginM
+            spacing: Style.marginM
+
+            NIcon {
+              icon: "layout-grid"
+              pointSize: Style.fontSizeL
+              color: Color.mPrimary
+            }
+
+            NText {
+              text: "Switch Layout"
+              pointSize: Style.fontSizeL
+              font.weight: Style.fontWeightBold
+              color: Color.mOnSurface
+              Layout.fillWidth: true
+            }
+          }
         }
 
         // Options
         RowLayout {
           Layout.fillWidth: true
+
           NText {
             text: "Apply to all monitors"
+            pointSize: Style.fontSizeM
             color: Color.mOnSurfaceVariant
-            pointSize: Style.fontSizeS
+            Layout.fillWidth: true
           }
-          Item { Layout.fillWidth: true }
+
           NToggle {
             checked: root.applyToAll
-            onToggled: (checked) => { 
-              root.applyToAll = checked 
+            onToggled: checked => {
+              root.applyToAll = checked
               if (!checked && root.selectedMonitors.length === 0) {
                 root.selectedMonitors = [root.panelMonitor]
               }
@@ -113,58 +152,64 @@ Item {
           }
         }
 
-        // Monitor Selector (shown when not applying to all)
+        // Monitor Selector
         ColumnLayout {
-          visible: !root.applyToAll
           Layout.fillWidth: true
           spacing: Style.marginS
+          
+          // NEW: Reduce opacity and disable interactions when Apply to All is checked
+          opacity: root.applyToAll ? 0.6 : 1.0
+          enabled: !root.applyToAll
 
           NText {
             text: "Select monitors"
+            pointSize: Style.fontSizeM
             color: Color.mOnSurfaceVariant
-            pointSize: Style.fontSizeS
           }
 
-          RowLayout {
+          Flow {
             Layout.fillWidth: true
             spacing: Style.marginS
 
             Repeater {
-              model: pluginApi?.mainInstance?.availableMonitors || []
+              model: (pluginApi && pluginApi.mainInstance && pluginApi.mainInstance.availableMonitors) ? pluginApi.mainInstance.availableMonitors : []
               
               delegate: Rectangle {
                 id: monitorBtn
-                Layout.preferredWidth: 100 * Style.uiScaleRatio
-                Layout.preferredHeight: 50 * Style.uiScaleRatio
+                width: monitorContent.implicitWidth + (Style.marginM * 2)
+                height: 44 * Style.uiScaleRatio
                 
-                property bool isSelected: root.selectedMonitors.indexOf(modelData) >= 0
-                property string currentLayout: (pluginApi?.mainInstance?.monitorLayouts ?? {})[modelData] || ""
+                // NEW: Show as selected if individually picked OR if Apply to All is active
+                property bool isSelected: root.applyToAll || root.selectedMonitors.includes(modelData)
+                
+                property string currentLayout: {
+                  var dict = (pluginApi && pluginApi.mainInstance && pluginApi.mainInstance.monitorLayouts) ? pluginApi.mainInstance.monitorLayouts : {}
+                  return dict[modelData] || ""
+                }
                 
                 color: isSelected ? Color.mPrimary : Color.mSurfaceVariant
                 radius: Style.radiusM
                 
                 border.width: 2
-                border.color: !isSelected ? Color.mOutline : Color.mPrimary
-                
-                ColumnLayout {
-                  anchors.centerIn: parent
-                  spacing: 2
+                border.color: isSelected ? Color.mPrimary : Color.mOutline
 
-                  NText {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: modelData
-                    color: isSelected ? Color.mOnPrimary : Color.mOnSurface
-                    font.weight: Font.Medium
-                    pointSize: Style.fontSizeXS
-                    elide: Text.ElideRight
+                RowLayout {
+                  id: monitorContent
+                  anchors.centerIn: parent
+                  spacing: Style.marginS
+
+                  NIcon {
+                    visible: isSelected
+                    icon: "check"
+                    pointSize: Style.fontSizeS
+                    color: Color.mOnPrimary
                   }
 
                   NText {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: root.iconMap[currentLayout] ? "" : (currentLayout || "-")
-                    color: isSelected ? Color.mOnPrimary : Color.mOnSurfaceVariant
-                    opacity: 0.7
-                    pointSize: Style.fontSizeXXS
+                    text: modelData
+                    color: isSelected ? Color.mOnPrimary : Color.mOnSurface
+                    font.weight: Font.Medium
+                    pointSize: Style.fontSizeM
                   }
                 }
 
@@ -181,27 +226,26 @@ Item {
         NDivider { Layout.fillWidth: true }
 
         // Layout Grid
-        GridLayout {
+        Flow {
           Layout.fillWidth: true
           Layout.fillHeight: true
-          columns: 3
-          rowSpacing: Style.marginS
-          columnSpacing: Style.marginS
+          spacing: Style.marginS
 
           Repeater {
             model: root.layouts
             
             delegate: Rectangle {
               id: layoutBtn
-              Layout.fillWidth: true
-              Layout.preferredHeight: 60 * Style.uiScaleRatio
+              width: (root.contentPreferredWidth - Style.marginL * 2 - Style.marginS * 2) / 3 - Style.marginS
+              height: 72 * Style.uiScaleRatio
               
               property bool isActive: {
                 if (root.selectedMonitors.length === 0) {
                   return modelData.code === root.activeLayout
                 } else if (root.selectedMonitors.length === 1) {
                   var mon = root.selectedMonitors[0]
-                  var monLayout = (pluginApi?.mainInstance?.monitorLayouts ?? {})[mon] || ""
+                  var dict = (pluginApi && pluginApi.mainInstance && pluginApi.mainInstance.monitorLayouts) ? pluginApi.mainInstance.monitorLayouts : {}
+                  var monLayout = dict[mon] || ""
                   return modelData.code === monLayout
                 }
                 return false
@@ -210,39 +254,31 @@ Item {
 
               color: isActive ? Color.mPrimary : Color.mSurfaceVariant
               radius: Style.radiusM
-              
-              border.width: 2
-              border.color: !isActive && isHovered ? Color.mPrimary : "transparent"
-              
-              Behavior on border.color { ColorAnimation { duration: 150 } }
-              Behavior on color { ColorAnimation { duration: 150 } }
+
+              Rectangle {
+                anchors.fill: parent
+                radius: parent.radius
+                color: isHovered && !isActive ? Color.mHover : "transparent"
+                opacity: isHovered && !isActive ? 0.2 : 0
+              }
 
               ColumnLayout {
                 anchors.centerIn: parent
-                spacing: Style.marginXS
-                width: parent.width - (Style.marginS * 2)
+                spacing: 2
 
-                // Icon
                 NIcon {
                   Layout.alignment: Qt.AlignHCenter
                   icon: root.iconMap[modelData.code] || "layout-board"
-                  pointSize: Style.fontSizeXL
+                  pointSize: Style.fontSizeM
                   color: layoutBtn.isActive ? Color.mOnPrimary : Color.mOnSurface
                 }
 
-                // Name
                 NText {
                   Layout.alignment: Qt.AlignHCenter
-                  Layout.fillWidth: true
-                  horizontalAlignment: Text.AlignHCenter
-                  
                   text: modelData.name
                   color: layoutBtn.isActive ? Color.mOnPrimary : Color.mOnSurface
-                  opacity: layoutBtn.isActive ? 1.0 : 0.7
-                  
                   font.weight: Font.Medium
                   pointSize: Style.fontSizeXS
-                  elide: Text.ElideRight
                 }
               }
 
@@ -250,10 +286,10 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                
+
                 onEntered: layoutBtn.isHovered = true
                 onExited: layoutBtn.isHovered = false
-                
+
                 onClicked: {
                   if (root.applyToAll) {
                     pluginApi.mainInstance.setLayoutGlobally(modelData.code)
