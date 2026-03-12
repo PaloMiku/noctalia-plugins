@@ -2,19 +2,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 
-// ── RegionSelector ────────────────────────────────────────────────────────────
-// Multi-screen overlay. GLSL-shader dimming, solid crosshair, corner handles,
-// fade-in animation, cursor coordinates label, size badge.
-//
-// Usage from Main.qml:
-//   RegionSelector { id: regionSelector; onRegionSelected: (x,y,w,h,screen) => { ... } }
-//   regionSelector.show(screen)   // pass ShellScreen from pluginApi.withCurrentScreen
-//   regionSelector.hide()         // cancel / close
-//
-// Signal fires only when user releases with w > 4 && h > 4.
-// Escape or right-click cancels and emits cancelled().
-// ─────────────────────────────────────────────────────────────────────────────
-
 Variants {
     id: selectorVariants
 
