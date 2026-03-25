@@ -67,7 +67,7 @@ Item {
                 }
 
                 ColumnLayout {
-                    spacing: 0
+                    spacing: Style.marginXS
                     Layout.alignment: Qt.AlignCenter
                     NText {
                         text: pluginApi?.tr("panel.header_title")
