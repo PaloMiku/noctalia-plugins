@@ -272,8 +272,8 @@ Item {
       if (a.Online && !b.Online) return -1
       if (!a.Online && b.Online) return 1
       // Then alphabetically by hostname
-      var nameA = (a.HostName || a.DNSName || "").toLowerCase()
-      var nameB = (b.HostName || b.DNSName || "").toLowerCase()
+      var nameA = (a.HostName || normalizeFqdn(a.DNSName) || "").toLowerCase()
+      var nameB = (b.HostName || normalizeFqdn(b.DNSName) || "").toLowerCase()
       return nameA.localeCompare(nameB)
     })
     return peers
@@ -494,7 +494,7 @@ Item {
 
                   readonly property var peerData: modelData
                   readonly property string peerIp: filterIPv4(peerData.TailscaleIPs)[0] || ""
-                  readonly property string peerHostname: peerData.HostName || peerData.DNSName || "Unknown"
+                  readonly property string peerHostname: peerData.HostName || normalizeFqdn(peerData.DNSName) || "Unknown"
                   readonly property bool peerOnline: peerData.Online || false
 
                   background: Rectangle {
