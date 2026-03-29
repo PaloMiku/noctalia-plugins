@@ -1,7 +1,6 @@
 {
   "widget": {
     "title": "IA",
-    "generating": "...",
     "tooltipTitle": "Panneau de l'assistant",
     "noApiKey": "Configurer la clé API dans les paramètres",
     "provider": "Fournisseur",

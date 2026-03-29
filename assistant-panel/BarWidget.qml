@@ -188,7 +188,7 @@ Item {
     }
 
     if (isGenerating) {
-      tooltip += "\n" + (pluginApi?.tr("widget.generating") || "Generating response...");
+      tooltip += "\n...";
     }
 
     tooltip += "\n\n" + (pluginApi?.tr("widget.rightClickHint") || "Right-click for options");
