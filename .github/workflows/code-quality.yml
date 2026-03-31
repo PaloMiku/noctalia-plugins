@@ -261,7 +261,7 @@ jobs:
             elif echo "$line" | grep -E "^@@" >/dev/null; then
               line_index=$(echo "$line" | grep -oE "\+[0-9]+" | grep -oE "[0-9]+")
               echo "Current line index reset: $line_index"
-            elif echo "$line" | grep -E "^+" >/dev/null; then
+            elif echo "$line" | grep -E "^\+" >/dev/null; then
               # Only new lines should be auto checked for this type of code quality
               if echo "$line" | grep -E "(border(\.width)?|spacing|pointSize|radius|margin(s)?): [0-9]+" >/dev/null; then
                 print_line "$h_priority" "$line_index" 'Do not use hardcoded values, always prefer to use the `Style` singleton instead' "$line"
