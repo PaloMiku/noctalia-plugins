@@ -37,7 +37,7 @@
       "tuneAsr": 0,
       "tuneMaghrib": 0,
       "tuneIsha": 0,
-      "wigetIcon": "building-mosque",
+      "widgetIcon": "building-mosque",
       "textColor": "none",
       "iconColor": "none",
       "activeColor": "primary"

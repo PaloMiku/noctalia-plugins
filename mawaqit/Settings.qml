@@ -250,7 +250,7 @@ ColumnLayout {
     spacing: Style.marginM
 
     NTextInput {
-      id: wigetIconInput
+      id: widgetIconInput
       Layout.fillWidth: true
       label: pluginApi?.tr("settings.widgetIcon.label")
       placeholderText: "building-mosque"
@@ -278,7 +278,7 @@ ColumnLayout {
 
     NIconPicker {
       id: mainIconPicker
-      initialIcon: root.widgetIcon
+      initialIcon: root.valueWidgetIcon
       onIconSelected: function (iconName) {
         root.valueWidgetIcon = iconName;
         wigetIconInput.text = iconName;
@@ -300,7 +300,7 @@ ColumnLayout {
 
   NColorChoice {
     label: pluginApi?.tr("settings.activeColor.label")
-    description: pluginApi?.tr("settings.activeColor.description")
+    description: pluginApi?.tr("settings.activeColor.desc")
     currentKey: root.valueActiveColor
     onSelected: key => { root.valueActiveColor = key; }
   }
