@@ -25,10 +25,10 @@
     "defaultSettings": {
       "enableSedentaryReminder": true,
       "sedentaryIntervalMinutes": 45,
-      "sedentaryMessage": "你已经坐了很久，起来活动一下吧。",
+      "sedentaryMessage": "",
       "enableHydrationReminder": true,
       "hydrationIntervalMinutes": 30,
-      "hydrationMessage": "该喝水了，休息一下补充水分。",
+      "hydrationMessage": "",
       "debugMode": false,
       "pausedAtTimestamp": 0,
       "remindersPaused": false,
@@ -36,7 +36,7 @@
       "medicationReminders": [
         {
           "id": "morning-medication",
-          "name": "Morning Medication",
+          "name": "",
           "time": "08:00",
           "enabled": true,
           "message": ""

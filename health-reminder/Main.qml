@@ -190,7 +190,11 @@ Item {
     medicationTriggeredDates = ({});
 
     if (ensureSettingsObject()) {
-      pluginApi.pluginSettings.pausedAtTimestamp = 0;
+      if (remindersPaused) {
+        pluginApi.pluginSettings.pausedAtTimestamp = nowTimestamp;
+      } else {
+        pluginApi.pluginSettings.pausedAtTimestamp = 0;
+      }
     }
   }
 

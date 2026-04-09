@@ -36,12 +36,13 @@ Item {
 
     const copy = [];
     for (let i = 0; i < src.length; i++) {
+      const item = src[i] || {};
       copy.push({
-        "id": src[i].id || `med-${i}`,
-        "name": src[i].name || "",
-        "time": src[i].time || "08:00",
-        "enabled": src[i].enabled !== false,
-        "message": src[i].message || ""
+        "id": item.id || `med-${i}`,
+        "name": item.name || "",
+        "time": item.time || "08:00",
+        "enabled": item.enabled !== false,
+        "message": item.message || ""
       });
     }
 
